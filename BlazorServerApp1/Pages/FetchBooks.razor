@@ -27,7 +27,7 @@ else
                 <tr>
                     <td>@book.Id</td>
                     <td>@book.Name</td>
-                    <td>@book.Author</td>
+                    <td>@book.Author?.Name</td>
                     <td>@book.Quantity</td>
                     <td>@book.Price</td>
                     <td>@book.Available</td>
@@ -42,6 +42,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        books = BookRepository.GetBooks();
+        books = BookRepository.GetBooksJoinAuthors();
     }
 }
