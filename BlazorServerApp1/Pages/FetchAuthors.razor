@@ -1,0 +1,39 @@
+﻿@page "/fetchauthors"
+@inject BlazorServerApp.Shared.AuthorsRepository authorRepo
+@using BlazorServerApp.Shared
+
+<h3>Authors List</h3>
+
+@if (authors == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Author Id</th>
+                <th>Author Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var author in authors)
+            {
+                <tr>
+                    <td>@author.Id</td>
+                    <td>@author.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Author> authors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        authors = authorRepo.GetAuthors();
+    }
+}
