@@ -63,5 +63,31 @@ namespace BlazorServerDemo.Data
             }
             return books;
         }
+        public void InsertBook(Book book)
+        {
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                connection.Open();
+                if (book.Quantity <= 0)
+                {
+                    book.Available = false;
+                }
+                string query = @"
+                        INSERT INTO Books (Id, Name, AuthorId, Quantity, Price, Available)
+                        VALUES (@Id, @Name, @AuthorId, @Quantity, @Price, @Available);
+                        ";
+                using (var command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", book.Id);
+                    command.Parameters.AddWithValue("@Name", book.Name);
+                    command.Parameters.AddWithValue("@AuthorId", book.Author.Id);
+                    command.Parameters.AddWithValue("@Quantity", book.Quantity);
+                    command.Parameters.AddWithValue("@Price", book.Price);
+                    command.Parameters.AddWithValue("@Available", book.Available);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
     }
 }

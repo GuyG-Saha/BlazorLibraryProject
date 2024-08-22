@@ -1,0 +1,90 @@
+﻿@page "/insertbook"
+@inject BlazorServerDemo.Data.BooksRepository BookRepository
+@using BlazorServerApp.Shared
+
+<h3>Manage Books</h3>
+
+<EditForm Model="newBook" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="Id">Book Id</label>
+        <InputNumber id="Id" class="form-control" @bind-Value="newBook.Id" />
+        <ValidationMessage For="@(() => newBook.Id)" />
+    </div>
+
+    <div class="form-group">
+        <label for="Name">Book Name</label>
+        <InputText id="Name" class="form-control" @bind-Value="newBook.Name" />
+        <ValidationMessage For="@(() => newBook.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="AuthorId">Author</label>
+        <InputNumber id="AuthorId" class="form-control" @bind-Value="newBook.AuthorId" />
+        <ValidationMessage For="@(() => newBook.AuthorId)" />
+    </div>
+
+    <div class="form-group">
+        <label for="Quantity">Quantity</label>
+        <InputNumber id="Quantity" class="form-control" @bind-Value="newBook.Quantity" />
+        <ValidationMessage For="@(() => newBook.Quantity)" />
+    </div>
+
+    <div class="form-group">
+        <label for="Price">Price</label>
+        <InputNumber id="Price" class="form-control" @bind-Value="newBook.Price" />
+        <ValidationMessage For="@(() => newBook.Price)" />
+    </div>
+
+    <div class="form-group">
+        <label for="Available">Available</label>
+        <InputCheckbox id="Available" class="form-check-input" @bind-Value="newBook.Available" />
+        <ValidationMessage For="@(() => newBook.Available)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Insert Book</button>
+</EditForm>
+
+@if (successMessage != null)
+{
+    <div class="alert alert-success mt-3">@successMessage</div>
+}
+
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    private Book newBook = new();
+    private string successMessage;
+    private string errorMessage;
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            // Validate AuthorId here if necessary
+            if (newBook.AuthorId <= 0)
+            {
+                errorMessage = "Please select a valid Author.";
+                return;
+            }
+            newBook.Author = new Author();
+            newBook.Author.Id = newBook.AuthorId;
+            BookRepository.InsertBook(newBook);
+            successMessage = "Book inserted successfully!";
+            errorMessage = null;
+
+            // Reset form
+            newBook = new Book();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+            successMessage = null;
+        }
+    }
+}

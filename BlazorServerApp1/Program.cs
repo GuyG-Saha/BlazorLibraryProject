@@ -1,3 +1,4 @@
+using BlazorServerApp.Shared;
 using BlazorServerDemo.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -15,6 +16,7 @@ namespace BlazorServerApp1
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
             builder.Services.AddScoped<BooksRepository>(sp => new BooksRepository("Server=localhost;Port=3306;Database=Library;User=root;Password=Pennylane7$;"));
+            builder.Services.AddScoped<AuthorsRepository>(sp => new AuthorsRepository("Server=localhost;Port=3306;Database=Library;User=root;Password=Pennylane7$;"));
 
             var app = builder.Build();
 
