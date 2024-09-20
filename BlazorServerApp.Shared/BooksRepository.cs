@@ -21,7 +21,7 @@ namespace BlazorServerDemo.Data
             using (var connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
-                var books = connection.Query<Book>("SELECT * FROM Book").ToList();
+                var books = connection.Query<Book>("SELECT * FROM Books").ToList();
                 return books;
             }
         }
@@ -88,6 +88,34 @@ namespace BlazorServerDemo.Data
                 }
             }
         }
-
+        public async Task<Book> GetBookById(int bookId)
+        {
+            Book book = null;
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query = @"SELECT * FROM Books b WHERE b.Id = @bookId";
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@bookId", bookId);
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            book = new Book
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                AuthorId = reader.GetInt32(reader.GetOrdinal("AuthorId")),
+                                Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                                Price = reader.GetInt32(reader.GetOrdinal("Price")),
+                                Available = reader.GetBoolean(reader.GetOrdinal("Available"))
+                            };
+                        }
+                    }
+                }
+            }
+            return book;
+        }
     }
 }
