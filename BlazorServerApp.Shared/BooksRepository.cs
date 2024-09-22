@@ -117,6 +117,14 @@ namespace BlazorServerDemo.Data
         }
         public async Task UpdateBookAsync(Book updatedBook)
         {
+            if (updatedBook.Quantity < 0)
+            {
+                throw new ArgumentException("Quantity cannot be less than 0");
+            }
+            if ((updatedBook.Quantity <= 0 && updatedBook.Available) || (updatedBook.Quantity > 0 && !updatedBook.Available))
+            {
+                throw new ArgumentException("Invalid combination of Quantity and Available status");
+            }
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
