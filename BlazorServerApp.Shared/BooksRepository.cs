@@ -1,8 +1,6 @@
 ﻿using BlazorServerApp.Shared;
 using Dapper;
 using MySqlConnector;
-using System.Collections.Generic;
-using System.Linq;
 
 
 namespace BlazorServerDemo.Data
@@ -21,7 +19,7 @@ namespace BlazorServerDemo.Data
             using (var connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
-                var books = connection.Query<Book>("SELECT * FROM Book").ToList();
+                var books = connection.Query<Book>("SELECT * FROM Books").ToList();
                 return books;
             }
         }
@@ -88,6 +86,62 @@ namespace BlazorServerDemo.Data
                 }
             }
         }
+        public async Task<Book> GetBookById(int bookId)
+        {
+            Book book = null;
+            using (var connection = new MySqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                string query = @"SELECT * FROM Books b WHERE b.Id = @bookId";
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@bookId", bookId);
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            book = new Book
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                AuthorId = reader.GetInt32(reader.GetOrdinal("AuthorId")),
+                                Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                                Price = reader.GetInt32(reader.GetOrdinal("Price")),
+                                Available = reader.GetBoolean(reader.GetOrdinal("Available"))
+                            };
+                        }
+                    }
+                }
+            }
+            return book;
+        }
+        public async Task UpdateBookAsync(Book updatedBook)
+        {
+            if (updatedBook.Quantity < 0)
+            {
+                throw new ArgumentException("Quantity cannot be less than 0");
+            }
+            if ((updatedBook.Quantity <= 0 && updatedBook.Available) || (updatedBook.Quantity > 0 && !updatedBook.Available))
+            {
+                throw new ArgumentException("Invalid combination of Quantity and Available status");
+            }
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var query = @"
+                    UPDATE Books 
+                    SET Name = @Name, Available = @Available, Quantity = @Quantity 
+                    WHERE Id = @Id";
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", updatedBook.Id);
+                    command.Parameters.AddWithValue("@Name", updatedBook.Name);
+                    command.Parameters.AddWithValue("@Quantity", updatedBook.Quantity);
+                    command.Parameters.AddWithValue("@Available", updatedBook.Available);
 
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
     }
 }

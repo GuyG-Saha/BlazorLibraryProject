@@ -1,0 +1,98 @@
+﻿@page "/editbook"
+@inject BlazorServerDemo.Data.BooksRepository BookRepository
+@inject NavigationManager Navigation
+@using BlazorServerApp.Shared
+
+<h3>Edit Books</h3>
+
+@if (books == null)
+{
+    <p>Loading books...</p>
+}
+else
+{
+    <div>
+        <label>Select a Book:</label>
+        <select @onchange="OnBookSelected">
+            <option value="">Select a Book</option>
+            @foreach (var book in books)
+            {
+                <option value="@book.Id">@book.Id - @book.Name</option>
+            }
+        </select>
+    </div>
+
+    @if (selectedBook != null)
+    {
+        <EditForm Model="@selectedBook" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label>Book Title:</label>
+                <InputText @bind-Value="selectedBook.Name" />
+            </div>
+            <div class="form-group">
+                <label for="available">Book Available?</label>
+                <InputCheckbox id="available" @bind-Value="selectedBook.Available" />
+            </div>
+            <div class="form-group">
+                <label for="form-group">Quantity:</label>
+                <InputNumber id="quantity" @bind-Value="selectedBook.Quantity" />
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </EditForm>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                @errorMessage
+            </div>
+        }
+    }
+}
+
+
+
+@code {
+    private List<Book>? books;
+    private Book? selectedBook;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load all books for selection
+        books = BookRepository.GetBooks();
+    }
+    private async Task OnBookSelected(ChangeEventArgs e)
+    {
+        // Get the selected book's ID from the dropdown
+        var selectedBookId = Convert.ToInt32(e.Value);
+
+        if (selectedBookId > 0)
+        {
+            // Retrieve the book details by ID
+            selectedBook = await BookRepository.GetBookById(selectedBookId);
+        }
+    }
+    private async void HandleValidSubmit()
+    {
+        if (selectedBook.Quantity < 0)
+        {
+            errorMessage = "Quantity cannot be less than 0";
+            return;
+        }
+        if ((selectedBook.Quantity <= 0 && selectedBook.Available) || (selectedBook.Quantity > 0 && !selectedBook.Available))
+        {
+            errorMessage = "Invalid combination and quantity and Book availability";
+            return;
+        }
+        try
+        {
+            await BookRepository.UpdateBookAsync(selectedBook);
+            Navigation.NavigateTo("/fetchbooks");  // Redirect on success
+        } catch (Exception ex)
+        {
+            errorMessage = $"Error updating book: {ex.Message}";
+        }
+    }
+
+}
