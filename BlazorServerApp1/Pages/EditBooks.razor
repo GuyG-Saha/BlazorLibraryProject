@@ -17,7 +17,7 @@ else
             <option value="">Select a Book</option>
             @foreach (var book in books)
             {
-                <option value="@book.Id">@book.Name</option>
+                <option value="@book.Id">@book.Id - @book.Name</option>
             }
         </select>
     </div>
@@ -41,6 +41,12 @@ else
             </div>
             <button type="submit" class="btn btn-primary">Save</button>
         </EditForm>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                @errorMessage
+            </div>
+        }
     }
 }
 
@@ -49,6 +55,7 @@ else
 @code {
     private List<Book>? books;
     private Book? selectedBook;
+    private string errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,10 +73,26 @@ else
             selectedBook = await BookRepository.GetBookById(selectedBookId);
         }
     }
-    private void HandleValidSubmit()
+    private async void HandleValidSubmit()
     {
-        Console.WriteLine($"Updating...{selectedBook}");
-        Navigation.NavigateTo("/fetchbooks");
+        if (selectedBook.Quantity < 0)
+        {
+            errorMessage = "Quantity cannot be less than 0";
+            return;
+        }
+        if ((selectedBook.Quantity <= 0 && selectedBook.Available) || (selectedBook.Quantity > 0 && !selectedBook.Available))
+        {
+            errorMessage = "Invalid combination and quantity and Book availability";
+            return;
+        }
+        try
+        {
+            await BookRepository.UpdateBookAsync(selectedBook);
+            Navigation.NavigateTo("/fetchbooks");  // Redirect on success
+        } catch (Exception ex)
+        {
+            errorMessage = $"Error updating book: {ex.Message}";
+        }
     }
 
 }
