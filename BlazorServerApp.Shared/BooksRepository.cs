@@ -1,8 +1,6 @@
 ﻿using BlazorServerApp.Shared;
 using Dapper;
 using MySqlConnector;
-using System.Collections.Generic;
-using System.Linq;
 
 
 namespace BlazorServerDemo.Data
@@ -116,6 +114,26 @@ namespace BlazorServerDemo.Data
                 }
             }
             return book;
+        }
+        public async Task UpdateBookAsync(Book updatedBook)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                var query = @"
+                    UPDATE Books 
+                    SET Name = @Name, Available = @Available, Quantity = @Quantity 
+                    WHERE Id = @Id";
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Id", updatedBook.Id);
+                    command.Parameters.AddWithValue("@Name", updatedBook.Name);
+                    command.Parameters.AddWithValue("@Quantity", updatedBook.Quantity);
+                    command.Parameters.AddWithValue("@Available", updatedBook.Available);
+
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
         }
     }
 }
