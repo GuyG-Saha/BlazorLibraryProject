@@ -159,7 +159,7 @@ namespace BlazorServerApp.Shared
                         const string updateBooksQuery = @"
                             UPDATE Books
                             SET Quantity = Quantity - @Quantity,
-                                Available = CASE WHEN Quantity - @Quantity > 0 THEN TRUE ELSE FLASE END
+                                Available = CASE WHEN Quantity - @Quantity > 0 THEN TRUE ELSE FALSE END
                             WHERE Id = @BookId;
                             ";
 
