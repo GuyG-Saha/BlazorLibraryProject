@@ -1,5 +1,5 @@
 ﻿@page "/editbook"
-@inject BlazorServerDemo.Data.BooksRepository BookRepository
+@inject BlazorServerApp.Shared.BooksRepository BookRepository
 @inject NavigationManager Navigation
 @using BlazorServerApp.Shared
 
@@ -30,6 +30,10 @@ else
             <div class="form-group">
                 <label>Book Title:</label>
                 <InputText @bind-Value="selectedBook.Name" />
+            </div>
+            <div class="form-group">
+                <label>Book Price:</label>
+                <InputNumber @bind-Value="selectedBook.Price" />
             </div>
             <div class="form-group">
                 <label for="available">Book Available?</label>
@@ -83,6 +87,11 @@ else
         if ((selectedBook.Quantity <= 0 && selectedBook.Available) || (selectedBook.Quantity > 0 && !selectedBook.Available))
         {
             errorMessage = "Invalid combination and quantity and Book availability";
+            return;
+        }
+        if (selectedBook.Price < 20 || selectedBook.Price > 500)
+        {
+            errorMessage = "Book price cannot be lower than 20 NIS or higher than 500";
             return;
         }
         try
