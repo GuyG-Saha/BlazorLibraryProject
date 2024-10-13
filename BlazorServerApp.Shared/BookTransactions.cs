@@ -12,8 +12,10 @@ namespace BlazorServerApp.Shared
         public int BookId { get; set; }
         public string TransactionType { get; set; } = "LOAN"; // 'Loan' or 'Sale'
         public int Quantity { get; set; } 
+        public string LoanerId { get; set; }
         public string LoanerDetails { get; set; } // JSON field for loaner details
         public DateTime TransactionDate { get; set; } = DateTime.Now;
+        public DateTime ValidUntil { get; set; } = DateTime.Now.AddDays(30);
     }
 
 }
