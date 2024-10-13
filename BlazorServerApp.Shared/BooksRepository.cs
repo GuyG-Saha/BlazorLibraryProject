@@ -173,8 +173,8 @@ namespace BlazorServerApp.Shared
                             throw new Exception("Failed to update the book quantity");
                         }
                         const string insertTransactionQuery = @"
-                        INSERT INTO BookTransactions (BookId, TransactionType, Quantity, LoanerDetails, TransactionDate)
-                        VALUES (@BookId, @TransactionType, @Quantity, @LoanerDetails, @TransactionDate);
+                        INSERT INTO BookTransactions (BookId, TransactionType, Quantity, LoanerDetails, TransactionDate, LoanerId, ValidUntil)
+                        VALUES (@BookId, @TransactionType, @Quantity, @LoanerDetails, @TransactionDate, @LoanerId, @ValidUntil);
                         ";
                         var insertResult = await connection.ExecuteAsync(insertTransactionQuery, transaction, transactionScope);
                         if (insertResult == 0)
