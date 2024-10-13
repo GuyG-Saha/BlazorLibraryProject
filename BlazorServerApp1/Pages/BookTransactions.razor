@@ -1,0 +1,119 @@
+﻿@page "/transactions"
+@inject BlazorServerApp.Shared.BooksRepository BookRepository
+@inject NavigationManager Navigation
+@using BlazorServerApp.Shared
+@using Newtonsoft.Json
+
+<h3>Loan or Sell a Book</h3>
+
+@if (books == null)
+{
+    <p>Loading books...</p>
+}
+else if (books.Count == 0)
+{
+    <p>No books available for loan or sale.</p>
+}
+else
+{
+    <EditForm Model="transaction" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="book">Book</label>
+            <select id="book" @bind="transaction.BookId" class="form-control">
+                @foreach (var book in books)
+                {
+                    <option value="@book.Id">@book.Name (by @book.Author.Name)</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="type">Transaction Type</label>
+            <select id="type" @bind="transaction.TransactionType" class="form-control">
+                <option value="Loan">Loan</option>
+                <option value="Sale">Sale</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="quantity">Quantity</label>
+            <InputNumber id="quantity" @bind-Value="transaction.Quantity" class="form-control" />
+            <ValidationMessage For="@(() => transaction.Quantity)" />
+        </div>
+
+        <div class="form-group">
+            <label for="loaner">Loaner Id</label>
+            <textarea id="loaner" @bind="transaction.LoanerId" class="form-control" rows="1"></textarea>
+        </div>
+
+        <div class="form-group">
+            <!-- Dynamic fields for other details -->
+            <label>Additional Loaner Details (Optional)</label>
+            @for (int i = 0; i < optionalFields.Count; i++)
+            {
+                var index = i;
+                <div class="form-group">
+                    <InputText placeholder="Field Name" @bind-Value="optionalFields[index].Key" class="form-control mb-2" />
+                    <InputText placeholder="Field Value" @bind-Value="optionalFields[index].Value" class="form-control mb-2" />
+                    <button type="button" class="btn btn-danger" @onclick="() => RemoveField(index)">Remove</button>
+                </div>
+            }
+            <button type="button" class="btn btn-secondary" @onclick="AddField">Add Field</button>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Transaction</button>
+    </EditForm>
+}
+@code {
+    private List<Book> books;
+    private BookTransaction transaction = new BookTransaction
+    {
+            LoanerDetails = string.Empty // Initialize LoanerDetails
+    };
+    private List<FieldItem> optionalFields = new List<FieldItem>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        books = BookRepository.GetBooksJoinAuthors();
+    }
+    private void UpdateLoanerDetails()
+    {
+        var dictionary = optionalFields.ToDictionary(f => f.Key, f => f.Value);
+        transaction.LoanerDetails = JsonConvert.SerializeObject(dictionary);
+        StateHasChanged();
+    }
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            UpdateLoanerDetails();
+            await BookRepository.AddBookTransactionsAsync(transaction);
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error occurred: {ex.Message}");
+        }
+    }
+    private void AddField()
+    {
+        optionalFields.Add(new FieldItem { Key = "", Value = "" });
+        UpdateLoanerDetails();
+    }
+
+    private void RemoveField(int index)
+    {
+        if (index >= 0 && index < optionalFields.Count)
+        {
+            optionalFields.RemoveAt(index);
+            UpdateLoanerDetails();
+        }
+    }
+    private class FieldItem
+    {
+        public string Key { get; set; }
+        public string Value { get; set; }
+    }
+}

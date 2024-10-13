@@ -1,5 +1,4 @@
 using BlazorServerApp.Shared;
-using BlazorServerDemo.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 

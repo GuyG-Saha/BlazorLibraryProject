@@ -3,7 +3,7 @@ using Dapper;
 using MySqlConnector;
 
 
-namespace BlazorServerDemo.Data
+namespace BlazorServerApp.Shared
 {
     public class BooksRepository
     {
@@ -125,12 +125,16 @@ namespace BlazorServerDemo.Data
             {
                 throw new ArgumentException("Invalid combination of Quantity and Available status");
             }
+            if (updatedBook.Price < 20 || updatedBook.Price > 500)
+            {
+                throw new ArgumentException("Invalid price - canot be lower than 20 or higher than 500 NIS");
+            }
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
                 var query = @"
                     UPDATE Books 
-                    SET Name = @Name, Available = @Available, Quantity = @Quantity 
+                    SET Name = @Name, Available = @Available, Quantity = @Quantity, Price = @Price 
                     WHERE Id = @Id";
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
@@ -138,8 +142,55 @@ namespace BlazorServerDemo.Data
                     command.Parameters.AddWithValue("@Name", updatedBook.Name);
                     command.Parameters.AddWithValue("@Quantity", updatedBook.Quantity);
                     command.Parameters.AddWithValue("@Available", updatedBook.Available);
-
+                    command.Parameters.AddWithValue("@Price", updatedBook.Price);
                     await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+        public async Task<bool> AddBookTransactionsAsync(BookTransaction transaction)
+        {
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                using (var transactionScope = await connection.BeginTransactionAsync()) 
+                {
+                    try
+                    {
+                        const string updateBooksQuery = @"
+                            UPDATE Books
+                            SET Quantity = Quantity - @Quantity,
+                                Available = CASE WHEN Quantity - @Quantity > 0 THEN TRUE ELSE FALSE END
+                            WHERE Id = @BookId;
+                            ";
+
+                        var updateResult = await connection.ExecuteAsync(updateBooksQuery, new
+                        {
+                            transaction.BookId,
+                            transaction.Quantity
+                        }, transactionScope);
+                        if (updateResult == 0)
+                        {
+                            throw new Exception("Failed to update the book quantity");
+                        }
+                        const string insertTransactionQuery = @"
+                        INSERT INTO BookTransactions (BookId, TransactionType, Quantity, LoanerDetails, TransactionDate, LoanerId, ValidUntil)
+                        VALUES (@BookId, @TransactionType, @Quantity, @LoanerDetails, @TransactionDate, @LoanerId, @ValidUntil);
+                        ";
+                        var insertResult = await connection.ExecuteAsync(insertTransactionQuery, transaction, transactionScope);
+                        if (insertResult == 0)
+                        {
+                            throw new Exception("Failed to insert the book transaction");
+                        }
+                        // Commit the transaction
+                        await transactionScope.CommitAsync();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // If any operation fails, roll back the transaction
+                        await transactionScope.RollbackAsync();
+                        return false;
+                    }
                 }
             }
         }
