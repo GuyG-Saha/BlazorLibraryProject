@@ -160,7 +160,8 @@ namespace BlazorServerApp.Shared
                             UPDATE Books
                             SET Quantity = Quantity - @Quantity,
                                 Available = CASE WHEN Quantity - @Quantity > 0 THEN TRUE ELSE FALSE END
-                            WHERE Id = @BookId;
+                            WHERE Id = @BookId
+                            AND Quantity - @Quantity >= 0;
                             ";
 
                         var updateResult = await connection.ExecuteAsync(updateBooksQuery, new
@@ -179,7 +180,7 @@ namespace BlazorServerApp.Shared
                         var insertResult = await connection.ExecuteAsync(insertTransactionQuery, transaction, transactionScope);
                         if (insertResult == 0)
                         {
-                            throw new Exception("Failed to insert the book transaction");
+                            throw new Exception("Insufficient quantity to complete the transaction or failed to update the book quantity");
                         }
                         // Commit the transaction
                         await transactionScope.CommitAsync();
