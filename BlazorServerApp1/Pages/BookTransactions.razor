@@ -90,7 +90,7 @@ else
         {
             UpdateLoanerDetails();
             await BookRepository.AddBookTransactionsAsync(transaction);
-            Navigation.NavigateTo("/");
+            Navigation.NavigateTo("/fetchbooks");
         }
         catch (Exception ex)
         {
